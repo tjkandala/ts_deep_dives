@@ -1,0 +1,19 @@
+{
+  "name": "oranguru",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "rm -rf ./dist && tsc"
+  },
+  "keywords": [],
+  "author": "TJ Kandala",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^26.1.0"
+  },
+  "dependencies": {
+    "@types/jest": "^26.0.1"
+  }
+}
