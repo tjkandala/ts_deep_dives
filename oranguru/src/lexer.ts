@@ -105,6 +105,7 @@ export function createLexer(source: string): Lexer {
         case "":
           tok = [TokenType.EOF, ""];
         default:
+          // change this after completing 'isDigit'
           if (typeof char === "string") {
             const literal = readIdentifier();
             tok = [lookupIdent(literal), literal];
