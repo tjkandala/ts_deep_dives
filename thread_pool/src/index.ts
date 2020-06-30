@@ -5,6 +5,10 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  * layer over Node.js workers.
  *
  * after, implement thread pooling
+ *
+ * two parts to this library:
+ *  1) promisifying functions for worker threads
+ *  2) easy thread pools for those functions
  */
 
 function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
@@ -30,6 +34,7 @@ function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
       args,
     });
 
+    /** this is kind of gnarly! pls fix the listener leak */
     return new Promise((resolve) => {
       function cleanup(val: any) {
         if (val === "received") {
@@ -50,11 +55,14 @@ function addTwo(first: number, second: number) {
 const coolAddTwo = typeSafeWorker(addTwo);
 
 async function main() {
-  await coolAddTwo(1, 2);
-  await coolAddTwo(2, 2);
+  for (let i = 0; i < 10; i++) {
+    coolAddTwo(i, i + 1);
+  }
+  await coolAddTwo(20, 22);
+  await coolAddTwo(100, 1);
 
   console.log("complete!");
-  process.exit();
+  //   process.exit();
 }
 
 main();
