@@ -1,4 +1,4 @@
-import { Worker, isMainThread, workerData } from "worker_threads";
+import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 
 /**
  * attempt at finding a good API for an abstraction
@@ -12,14 +12,26 @@ import { Worker, isMainThread, workerData } from "worker_threads";
 // });
 
 function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
-  function wrapper() {
-    fn(workerData.args);
-  }
+  const myWorker = new Worker(
+    `
+    const {parentPort} = require("worker_threads");
+    console.log("meep");
+    ${fn.toString()}
+    parentPort?.on("message", (val) => {
+          ${fn.name}(...val.args)
+          process.exit()
+    });
+      `,
+    {
+      eval: true,
+    }
+  );
 
   return [
     (...args: Parameters<T>) => {
-      const myWorker = new Worker(__dirname + "/thread.js", {
-        workerData: { args },
+      console.log("public api called");
+      myWorker.postMessage({
+        args,
       });
     },
   ];
@@ -32,3 +44,4 @@ function addTwo(first: number, second: number) {
 const [coolAddTwo] = typeSafeWorker(addTwo);
 
 coolAddTwo(1, 2);
+coolAddTwo(2, 2);
