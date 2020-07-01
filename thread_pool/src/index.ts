@@ -12,12 +12,18 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *  1) promisifying functions for worker threads
  *  2) easy thread pools for those functions
  *
- * NOTE: make it isomorphic!
+ * TODOs:
+ * - make it isomorphic! (compat w Web Workers & Node.js Workers)
+ * - benchmark against single-threaded versions
+ *
+ * References:
+ * https://www.codeproject.com/Articles/7933/Smart-Thread-Pool
+ * https://www.ibm.com/developerworks/java/library/j-jtp0730/index.html
  */
 
 function typeSafeWorker<T extends (...args: any) => any>(
   fn: T
-): WorkerizedFunction<T> {
+): AsyncWorker<T> {
   console.log("public api called");
 
   /** creates a new worker */
@@ -28,9 +34,9 @@ function typeSafeWorker<T extends (...args: any) => any>(
           const {parentPort} = require("worker_threads");
           ${fn.toString()}
           parentPort?.on("message", (val) => {
-                ${fn.name}(...val.args);
+                const data = ${fn.name}(...val.args);
     
-                parentPort?.postMessage("received");
+                parentPort?.postMessage({ status: "received", data });
           });
             `,
       {
@@ -44,7 +50,7 @@ function typeSafeWorker<T extends (...args: any) => any>(
 
     return new Promise<ReturnType<T>>((resolve) => {
       function cleanup(val: any) {
-        if (val && val.message === "received") {
+        if (val && val.status === "received") {
           resolve(val.data);
           myWorker.off("message", cleanup);
         }
@@ -55,7 +61,7 @@ function typeSafeWorker<T extends (...args: any) => any>(
   };
 }
 
-type WorkerizedFunction<T extends (...args: any) => any> = (
+type AsyncWorker<T extends (...args: any) => any> = (
   ...args: Parameters<T>
 ) => Promise<ReturnType<T>>;
 
@@ -71,10 +77,18 @@ async function main() {
     coolAddTwo(i, i + 1);
   }
   await coolAddTwo(20, 22);
-  await coolAddTwo(100, 1);
+  const resd = await coolAddTwo(100, 1);
+
+  console.log("resd is " + resd);
 
   console.log("complete!");
   //   process.exit();
 }
 
 main();
+
+function initThreadPool() {
+  return new Promise((res) => {
+    res();
+  });
+}
