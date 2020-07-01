@@ -1,7 +1,7 @@
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 
 /**
- * sPool library: Isomorphic Thread Pools
+ * sPool library: Easy Type-Safe Thread Pools
  *
  * attempt at finding a good API for an abstraction
  * layer over Node.js workers.
@@ -18,12 +18,17 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  * - error handling (check stack trace)
  * - abortable
  * - use SharedArrayBuffer!
+ * - finally, demonstrate a real-world use-case! (load testing?????)
  *
  * final steps: read all of mraleph, optimize perf
  *
  * References:
  * https://www.codeproject.com/Articles/7933/Smart-Thread-Pool
  * https://www.ibm.com/developerworks/java/library/j-jtp0730/index.html
+ *
+ * Why?
+ *  - I was a little exhausted from constantly code-golfing for front-end libraries. On Node.js libraries,
+ *    I can focus on "clean code" and runtime performance, without bundle size getting in the way
  */
 
 function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
@@ -85,6 +90,11 @@ function initThreadPool(fn: Callback, threads: number) {
     kill() {},
     log() {},
   };
+
+  /**
+   * returning worker function and "handler interface" as separate elements
+   * of a tuple for easy passing-around of function!
+   */
 
   return new Promise<[any, typeof api]>((res) => {
     res(["hi", api]);
