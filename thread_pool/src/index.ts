@@ -12,14 +12,17 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *  1) promisifying functions for worker threads
  *  2) easy thread pools for those functions
  *
+ * NOTE: make it isomorphic!
  */
 
-function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
+function typeSafeWorker<T extends (...args: any) => any>(
+  fn: T
+): WorkerizedFunction<T> {
   console.log("public api called");
 
   /** creates a new worker */
 
-  return async (...args: Parameters<T>) => {
+  return (...args) => {
     const myWorker = new Worker(
       `
           const {parentPort} = require("worker_threads");
@@ -39,10 +42,10 @@ function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
       args,
     });
 
-    return new Promise((resolve) => {
+    return new Promise<ReturnType<T>>((resolve) => {
       function cleanup(val: any) {
-        if (val === "received") {
-          resolve();
+        if (val && val.message === "received") {
+          resolve(val.data);
           myWorker.off("message", cleanup);
         }
       }
@@ -52,8 +55,13 @@ function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
   };
 }
 
+type WorkerizedFunction<T extends (...args: any) => any> = (
+  ...args: Parameters<T>
+) => Promise<ReturnType<T>>;
+
 function addTwo(first: number, second: number) {
   console.log(first + second);
+  return first + second;
 }
 
 const coolAddTwo = typeSafeWorker(addTwo);
