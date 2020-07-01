@@ -28,21 +28,42 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *
  * Why?
  *  - I was a little exhausted from constantly code-golfing for front-end libraries. On Node.js libraries,
- *    I can focus on "clean code" and runtime performance, without bundle size getting in the way
+ *    I can focus on API design and runtime performance, without bundle size getting in the way
  */
 
+/** creates a new sPool worker */
 function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
-  /** creates a new worker */
+  const funcString = fn.toString();
 
   async function asyncWorker(...args: Parameters<T>) {
+    /**
+     * TODO: use a worker from the pool. closure referenced variables are a problem here tho. encourage
+     * explicit "dependency injection"
+     *
+     * e.g.
+     *
+     * const needsDepsFunc = typeSafeWorker(workerFunc);
+     * const wrappedFunc = (nonDepsArg) => neepsDepsFunc(nonDepsArg, dep1, dep2)
+     *
+     * This allows you to use deps from parent thread scope
+     */
     const myWorker = new Worker(
       `
           const {parentPort} = require("worker_threads");
-          ${fn.toString()}
+          ${funcString}
           parentPort?.on("message", (val) => {
-                const data = ${fn.name}(...val.args);
-    
-                parentPort?.postMessage({ status: "received", data });
+
+            switch(val.type) {
+                case "call": {
+                    const data = ${fn.name}(...val.args);
+                    parentPort?.postMessage({ status: "received", data });
+                    break;
+                }
+
+                case "replaceFunc": {
+                    break;
+                }
+            }
           });
             `,
       {
@@ -51,6 +72,7 @@ function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
     );
 
     myWorker.postMessage({
+      type: "call",
       args,
     });
 
@@ -96,7 +118,7 @@ function initThreadPool(fn: Callback, threads: number) {
    * of a tuple for easy passing-around of function!
    */
 
-  return new Promise<[any, typeof api]>((res) => {
+  return new Promise<[string, typeof api]>((res) => {
     res(["hi", api]);
   });
 }
@@ -107,7 +129,7 @@ function initThreadPool(fn: Callback, threads: number) {
 
 async function main() {
   for (let i = 0; i < 10; i++) {
-    coolAddTwo(i, i + 1);
+    await coolAddTwo(i, i + 1);
   }
   await coolAddTwo(20, 22);
   const resd = await coolAddTwo(100, 1);
