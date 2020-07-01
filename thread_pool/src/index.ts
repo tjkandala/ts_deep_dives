@@ -1,6 +1,8 @@
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 
 /**
+ * sPool library
+ *
  * attempt at finding a good API for an abstraction
  * layer over Node.js workers.
  *
@@ -9,32 +11,34 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  * two parts to this library:
  *  1) promisifying functions for worker threads
  *  2) easy thread pools for those functions
+ *
  */
 
 function typeSafeWorker<T extends (...args: any) => void>(fn: T) {
   console.log("public api called");
 
-  const myWorker = new Worker(
-    `
-      const {parentPort} = require("worker_threads");
-      ${fn.toString()}
-      parentPort?.on("message", (val) => {
-            ${fn.name}(...val.args);
-
-            parentPort?.postMessage("received");
-      });
-        `,
-    {
-      eval: true,
-    }
-  );
+  /** creates a new worker */
 
   return async (...args: Parameters<T>) => {
+    const myWorker = new Worker(
+      `
+          const {parentPort} = require("worker_threads");
+          ${fn.toString()}
+          parentPort?.on("message", (val) => {
+                ${fn.name}(...val.args);
+    
+                parentPort?.postMessage("received");
+          });
+            `,
+      {
+        eval: true,
+      }
+    );
+
     myWorker.postMessage({
       args,
     });
 
-    /** this is kind of gnarly! pls fix the listener leak */
     return new Promise((resolve) => {
       function cleanup(val: any) {
         if (val === "received") {
