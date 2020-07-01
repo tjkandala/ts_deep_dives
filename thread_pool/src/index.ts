@@ -81,8 +81,13 @@ function addTwo(first: number, second: number) {
 const coolAddTwo = typeSafeWorker(addTwo);
 
 function initThreadPool(fn: Callback, threads: number) {
-  return new Promise<[any, () => void]>((res) => {
-    res(["hi", function kill() {}]);
+  const api = {
+    kill() {},
+    log() {},
+  };
+
+  return new Promise<[any, typeof api]>((res) => {
+    res(["hi", api]);
   });
 }
 
@@ -102,7 +107,7 @@ async function main() {
   console.log("complete!");
   //   process.exit();
 
-  const [workerFunc, kill] = await initThreadPool(addTwo, 8);
+  const [workerFunc, api] = await initThreadPool(addTwo, 8);
 }
 
 main();
