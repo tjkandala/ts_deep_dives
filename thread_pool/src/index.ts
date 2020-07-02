@@ -1,7 +1,7 @@
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 
 /**
- * sPool library: Easy Type-Safe Thread Pools
+ * sPool library: Easy Type-Safe Worker Thread Pools
  *
  * attempt at finding a good API for an abstraction
  * layer over Node.js workers.
@@ -19,6 +19,10 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  * - abortable
  * - use SharedArrayBuffer!
  * - finally, demonstrate a real-world use-case! (load testing?????)
+ * - solve dining philosophers problem in sPool! the only node solution I found uses clusters, not workers!
+ *
+ * NOTEs:
+ * - don't make an overloaded main function! separate api for function and for files... wait nvm. might be more elegant to overload
  *
  * final steps: read all of mraleph, optimize perf
  *
@@ -30,6 +34,13 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *  - I was a little exhausted from constantly code-golfing for front-end libraries. On Node.js libraries,
  *    I can focus on API design and runtime performance, without bundle size getting in the way
  */
+
+type AsyncWorker<T extends Callback> = {
+  (...args: Parameters<T>): Promise<ReturnType<T>>;
+  kill: string;
+};
+
+type Callback = (...args: any) => any;
 
 /** creates a new sPool worker */
 function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
@@ -77,7 +88,7 @@ function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
     });
 
     return new Promise<ReturnType<T>>((resolve) => {
-      function cleanup(val: any) {
+      function cleanup(val: { status: string; data: ReturnType<T> }) {
         if (val && val.status === "received") {
           resolve(val.data);
           myWorker.off("message", cleanup);
@@ -93,13 +104,6 @@ function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
   return asyncWorker;
 }
 
-type AsyncWorker<T extends Callback> = {
-  (...args: Parameters<T>): Promise<ReturnType<T>>;
-  kill: string;
-};
-
-type Callback = (...args: any) => any;
-
 function addTwo(first: number, second: number) {
   console.log(first + second);
   return first + second;
@@ -107,11 +111,27 @@ function addTwo(first: number, second: number) {
 
 const coolAddTwo = typeSafeWorker(addTwo);
 
+/**
+ *
+ * thread pool init should return the worker creation function!!
+ * this is a better design choice because the worker fn depends on
+ * the existence of + reference to the thread pool!
+ *
+ * The "worker factory" returns "client stub" functions
+ *
+ * @param fn
+ * @param threads
+ */
+
 function initThreadPool(fn: Callback, threads: number) {
   const api = {
     kill() {},
     log() {},
   };
+
+  /**
+   * don't forget to keep track of thread ids!
+   */
 
   /**
    * returning worker function and "handler interface" as separate elements
@@ -129,7 +149,7 @@ function initThreadPool(fn: Callback, threads: number) {
 
 async function main() {
   for (let i = 0; i < 10; i++) {
-    await coolAddTwo(i, i + 1);
+    coolAddTwo(i, i + 1);
   }
   await coolAddTwo(20, 22);
   const resd = await coolAddTwo(100, 1);
