@@ -1,7 +1,7 @@
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 import { cpus } from "os";
 
-/**
+/*
  * sPool library: Easy Type-Safe Worker Thread Pools
  *
  * attempt at finding a good API for an abstraction
@@ -28,12 +28,18 @@ import { cpus } from "os";
  *
  * final steps: read all of mraleph, optimize perf
  *
+ * Tradeoffs:
+ * - duplicating function definitions in all threads
+ * - can't reference enclosing scopes in functions
+ * - have to pass in functions at creation time
+ *
  * References:
  * https://www.ibm.com/developerworks/java/library/j-jtp0730/index.html
  *
  * Why?
  *  - I was a little exhausted from constantly code-golfing for front-end libraries. On Node.js libraries,
- *    I can focus on API design and runtime performance, without bundle size getting in the way
+ *    I can focus on API design and runtime performance, without bundle size getting in the way. no worries
+ * about RegeneratorRuntime
  */
 
 type AsyncStub<T extends Callback> = {
@@ -63,6 +69,7 @@ function typeSafeWorker<T extends Callback>(fn: T): AsyncStub<T> {
       `
           const {parentPort} = require("worker_threads");
           ${funcString}
+          
           parentPort?.on("message", (val) => {
 
             switch(val.type) {
@@ -112,6 +119,8 @@ function addTwo(first: number, second: number) {
 
 const coolAddTwo = typeSafeWorker(addTwo);
 
+let alreadyPooled = false;
+
 /**
  *
  * thread pool init should return the worker creation function!!
@@ -120,33 +129,79 @@ const coolAddTwo = typeSafeWorker(addTwo);
  *
  * The "worker factory" returns "client stub" functions
  *
+ * TODO: look into passing variadic amount of functions. each function is given an
+ * id at create time. generate wrapper functions which send messages to a worker with
+ * function id and args!
+ *
  * @param fn
  * @param threads
  */
 
-async function initThreadPool(fn: Callback, threads?: number) {
-  if (false) {
+async function initThreadPool<T extends Callback>(fn: T, threads?: number) {
+  if (alreadyPooled) {
     const err = new Error("A thread pool already exists!");
     err.name = "MultipleThreadPoolError";
     throw err;
   }
 
-  // this is a 2-core/4-thread processor, cpus().length is returning 4
-  // seems it is accounting for hyperthreaded cpus
-  if (threads == null) threads = cpus().length + 1;
+  alreadyPooled = true;
+  const funcString = fn.toString();
 
-  const pool = {
+  // this is a 2-core/4-thread processor, cpus().length is returning 4
+  // seems it is accounting for hyperthreading
+  if (threads == null) threads = cpus().length;
+
+  const inactiveWorkers: Worker[] = [];
+  const activeWorkers: Worker[] = [];
+
+  for (let i = 0; i < threads; i++) {
+    inactiveWorkers.push(
+      new Worker(
+        `
+                const {parentPort} = require("worker_threads");
+                ${funcString}
+                
+                parentPort?.on("message", (val) => {
+      
+                  switch(val.type) {
+                      case "call": {
+                          const data = ${fn.name}(...val.args);
+                          parentPort?.postMessage({ status: "received", data });
+                          break;
+                      }
+      
+                      case "replaceFunc": {
+                          console.log("repl")
+                          break;
+                      }
+                  }
+                });
+                  `,
+        {
+          eval: true,
+        }
+      )
+    );
+  }
+
+  const invocationQueue = [];
+
+  const handle = {
     kill() {},
     log() {},
   };
 
-  let nextId = 0;
-  /** associate function for creation worker to an incrementing id */
-  const functionMap = new Map<Callback, number>();
+  async function asyncStub(...args: Parameters<T>) {
+    inactiveWorkers[0].postMessage({
+      type: "replaceFunc",
+    });
 
-  function createWorker(fn: Callback) {
-    functionMap.set(fn, nextId++);
+    return new Promise<ReturnType<T>>((res) => {
+      res();
+    });
   }
+
+  asyncStub.kill = "hi";
 
   async function* workQueue() {
     yield 12;
@@ -172,13 +227,15 @@ async function initThreadPool(fn: Callback, threads?: number) {
    * of a tuple for easy passing-around of function!
    */
 
-  return new Promise<[typeof createWorker, typeof pool]>(async (res) => {
-    res([createWorker, pool]);
-    // after resolving promise, kick off work queue.. evaluate this approach further
+  return new Promise<[typeof handle, typeof asyncStub]>(async (res) => {
+    /**
+     * kick off work queue, then resolve promise
+     */
     for await (const val of asyncGenWQ) {
-      // nvm, check if this blocks initial return..
       console.log(val);
     }
+
+    res([handle, asyncStub]);
   });
 }
 
@@ -198,7 +255,9 @@ async function main() {
   console.log("complete!");
   //   process.exit();
 
-  const [workerFunc, api] = await initThreadPool(addTwo, 8);
+  const [api, wow] = await initThreadPool(addTwo, 8);
+
+  wow(1, 2);
 }
 
 main();
