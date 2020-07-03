@@ -1,4 +1,5 @@
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
+import { cpus } from "os";
 
 /**
  * sPool library: Easy Type-Safe Worker Thread Pools
@@ -123,7 +124,17 @@ const coolAddTwo = typeSafeWorker(addTwo);
  * @param threads
  */
 
-function initThreadPool(fn: Callback, threads: number) {
+async function initThreadPool(fn: Callback, threads?: number) {
+  if (false) {
+    const err = new Error("A thread pool already exists!");
+    err.name = "MultipleThreadPoolError";
+    throw err;
+  }
+
+  // this is a 2-core/4-thread processor, cpus().length is returning 4
+  // seems it is accounting for hyperthreaded cpus
+  if (threads == null) threads = cpus().length + 1;
+
   const pool = {
     kill() {},
     log() {},
@@ -137,7 +148,12 @@ function initThreadPool(fn: Callback, threads: number) {
     functionMap.set(fn, nextId++);
   }
 
-  async function* workQueue() {}
+  async function* workQueue() {
+    yield 12;
+    yield "tj";
+  }
+
+  const asyncGenWQ = workQueue();
 
   /**
    * don't forget to keep track of thread ids!
@@ -156,8 +172,13 @@ function initThreadPool(fn: Callback, threads: number) {
    * of a tuple for easy passing-around of function!
    */
 
-  return new Promise<[typeof createWorker, typeof pool]>((res) => {
+  return new Promise<[typeof createWorker, typeof pool]>(async (res) => {
     res([createWorker, pool]);
+    // after resolving promise, kick off work queue.. evaluate this approach further
+    for await (const val of asyncGenWQ) {
+      // nvm, check if this blocks initial return..
+      console.log(val);
+    }
   });
 }
 
