@@ -23,11 +23,11 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *
  * NOTEs:
  * - don't make an overloaded main function! separate api for function and for files... wait nvm. might be more elegant to overload
+ * - cool perks! no syncronization needed bc no shared address space/memory
  *
  * final steps: read all of mraleph, optimize perf
  *
  * References:
- * https://www.codeproject.com/Articles/7933/Smart-Thread-Pool
  * https://www.ibm.com/developerworks/java/library/j-jtp0730/index.html
  *
  * Why?
@@ -35,7 +35,7 @@ import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
  *    I can focus on API design and runtime performance, without bundle size getting in the way
  */
 
-type AsyncWorker<T extends Callback> = {
+type AsyncStub<T extends Callback> = {
   (...args: Parameters<T>): Promise<ReturnType<T>>;
   kill: string;
 };
@@ -43,7 +43,7 @@ type AsyncWorker<T extends Callback> = {
 type Callback = (...args: any) => any;
 
 /** creates a new sPool worker */
-function typeSafeWorker<T extends Callback>(fn: T): AsyncWorker<T> {
+function typeSafeWorker<T extends Callback>(fn: T): AsyncStub<T> {
   const funcString = fn.toString();
 
   async function asyncWorker(...args: Parameters<T>) {
@@ -124,22 +124,40 @@ const coolAddTwo = typeSafeWorker(addTwo);
  */
 
 function initThreadPool(fn: Callback, threads: number) {
-  const api = {
+  const pool = {
     kill() {},
     log() {},
   };
 
+  let nextId = 0;
+  /** associate function for creation worker to an incrementing id */
+  const functionMap = new Map<Callback, number>();
+
+  function createWorker(fn: Callback) {
+    functionMap.set(fn, nextId++);
+  }
+
+  async function* workQueue() {}
+
   /**
    * don't forget to keep track of thread ids!
+   *
+   *
+   * also, functions should be associated with an id by reference (map/weakmap?).
+   * when the stub for an id is called, send "call" message to a worker along with
+   * stringified function and args!
+   *
+   * make a module-global variable to keep track of whether a thread pool has been
+   * created already! throw exception if user tries to create multiple thread pools (that makes no sense, bad for perf)
    */
 
   /**
-   * returning worker function and "handler interface" as separate elements
+   * returning worker function and "handle interface" as separate elements
    * of a tuple for easy passing-around of function!
    */
 
-  return new Promise<[string, typeof api]>((res) => {
-    res(["hi", api]);
+  return new Promise<[typeof createWorker, typeof pool]>((res) => {
+    res([createWorker, pool]);
   });
 }
 
