@@ -1,10 +1,10 @@
-import { lexerGenerator } from "./lexer";
+import { createLexer } from "./lexer";
 
 describe("lexer", () => {
   test("works", () => {
     const program = `let five = 5;
     let ten = 10;
-    
+
     let add = fn(x, y) {
       x + y;
     }
@@ -13,7 +13,7 @@ describe("lexer", () => {
 
     const tokens = [];
 
-    for (let token of lexerGenerator(program)) {
+    for (let token of createLexer(program)) {
       tokens.push(token);
     }
 
