@@ -152,10 +152,11 @@ function lookupIdent(identOrKeyword: string): Keyword[0] | "IDENT" {
   if (isKeyword(identOrKeyword)) {
     return identOrKeyword;
   }
-
+  // user-defined identifier
   return "IDENT";
 }
 
+/** user-defined typeguard to discriminate keywords from identifiers */
 function isKeyword(identOrKeyword: string): identOrKeyword is Keyword[0] {
   return identOrKeyword in keywords;
 }
