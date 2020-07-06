@@ -2,55 +2,36 @@
  * Oranguru
  *
  * TODO:
- * - stream source code from files, as opposed to passing in a string to eval
+ * - stream source code from files, as opposed to passing in a string to eval. attatch filenames
+ * and line numbers for better error messages!
+ * - implement 'import' keyword
  *
  * fun goals:
  * - make this faster than the original monkey language
  */
 
-// enum TokenType {
-//   ILLEGAL = "ILLEGAL",
-//   EOF = "EOF",
-//   // Identifiers + literals
-//   IDENT = "IDENT", // add, foobar, x, y, ...
-//   INT = "INT", // 1234
-//   // Operators
-//   ASSIGN = "=",
-//   PLUS = "+",
-//   // Delimiters
-//   COMMA = ",",
-//   SEMICOLON = ";",
-//   LPAREN = "(",
-//   RPAREN = ")",
-//   LBRACE = "{",
-//   RBRACE = "}",
-//   // Keywords
-//   FUNCTION = "FUNCTION",
-//   LET = "LET",
-// }
-
-enum TokenType {
-  ILLEGAL = 0, // a token/character we don't know about
-  EOF, // "end of file"
+type Token =
+  | ["ILLEGAL", string] // a token/character we don't know about
+  | ["EOF", ""] // "end of file"
   // Identifiers + literals
-  IDENT, // add, foobar, x, y, ...
-  INT, // 1234
+  | ["IDENT", string] // e.g. add, foobar, x, y, ...
+  | ["INT", string] // 1234
   // Operators
-  ASSIGN,
-  PLUS,
+  | ["ASSIGN", "="]
+  | ["PLUS", "+"]
   // Delimiters
-  COMMA,
-  SEMICOLON,
-  LPAREN,
-  RPAREN,
-  LBRACE,
-  RBRACE,
+  | ["COMMA", ","]
+  | ["SEMICOLON", ";"]
+  | ["LPAREN", "("]
+  | ["RPAREN", ")"]
+  | ["LBRACE", "{"]
+  | ["RBRACE", "}"]
   // Keywords
-  FUNCTION,
-  LET,
-}
+  | Keyword;
 
-type Token = [TokenType, string];
+type Keyword = ["FUNCTION", string] | ["LET", string];
+
+type TokenType = Token[0];
 
 interface Lexer {
   nextToken(): Token;
@@ -66,7 +47,7 @@ export function createLexer(source: string): Lexer {
 
   function readChar() {
     if (readPosition >= source.length) {
-      char = ""; // empty string signals EOF
+      char = ""; // empty string (not whitespace) signals EOF
     } else {
       char = source[readPosition];
     }
@@ -105,23 +86,32 @@ export function createLexer(source: string): Lexer {
 
       switch (char) {
         case "=":
-          tok = [TokenType.ASSIGN, char];
+          tok = ["ASSIGN", char];
+          break;
         case ";":
-          tok = [TokenType.SEMICOLON, char];
+          tok = ["SEMICOLON", char];
+          break;
         case "(":
-          tok = [TokenType.LPAREN, char];
+          tok = ["LPAREN", char];
+          break;
         case ")":
-          tok = [TokenType.RPAREN, char];
+          tok = ["RPAREN", char];
+          break;
         case ",":
-          tok = [TokenType.COMMA, char];
+          tok = ["COMMA", char];
+          break;
         case "+":
-          tok = [TokenType.PLUS, char];
+          tok = ["PLUS", char];
+          break;
         case "{":
-          tok = [TokenType.LBRACE, char];
+          tok = ["LBRACE", char];
+          break;
         case "}":
-          tok = [TokenType.RBRACE, char];
+          tok = ["RBRACE", char];
+          break;
         case "":
-          tok = [TokenType.EOF, ""];
+          tok = ["EOF", ""];
+          break;
         default:
           // change this after completing 'isDigit'
           if (typeof char === "string") {
@@ -129,7 +119,7 @@ export function createLexer(source: string): Lexer {
             tok = [lookupIdent(literal), literal];
             return tok;
           } else {
-            tok = [TokenType.ILLEGAL, char];
+            tok = ["ILLEGAL", char];
           }
       }
 
@@ -153,15 +143,21 @@ function isWhitespace(char: string): boolean {
   return char === " " || char === "\t" || char === "\n" || char === "\r";
 }
 
-const keywords = Object.freeze({
-  fn: TokenType.FUNCTION,
-  let: TokenType.LET,
+const keywords: { [token: string]: Keyword[0] } = Object.freeze({
+  fn: "FUNCTION",
+  let: "LET",
 });
 
-function lookupIdent(
-  ident: string
-): typeof keywords[keyof typeof keywords] | TokenType.IDENT {
-  return TokenType.IDENT;
+function lookupIdent(identOrKeyword: string): Keyword[0] | "IDENT" {
+  if (isKeyword(identOrKeyword)) {
+    return identOrKeyword;
+  }
+
+  return "IDENT";
+}
+
+function isKeyword(identOrKeyword: string): identOrKeyword is Keyword[0] {
+  return identOrKeyword in keywords;
 }
 
 // type Values<T> = T[keyof T];
