@@ -1,35 +1,53 @@
 /**
- * Chapter 1: Lexing
+ * Oranguru
  *
- * 1.1 Lexical Analysis
+ * TODO:
+ * - stream source code from files, as opposed to passing in a string to eval
  *
- * - turn source code into a more accessible form
- * - source code -> tokens -> abstract syntax tree
- * - source code to tokens is called "lexical analysis"/"lexing"
- * - tokens are small data structures fed into the parser => AST
- * - whitespace length doesn't matter in Monkey
- *
+ * fun goals:
+ * - make this faster than the original monkey language
  */
 
+// enum TokenType {
+//   ILLEGAL = "ILLEGAL",
+//   EOF = "EOF",
+//   // Identifiers + literals
+//   IDENT = "IDENT", // add, foobar, x, y, ...
+//   INT = "INT", // 1234
+//   // Operators
+//   ASSIGN = "=",
+//   PLUS = "+",
+//   // Delimiters
+//   COMMA = ",",
+//   SEMICOLON = ";",
+//   LPAREN = "(",
+//   RPAREN = ")",
+//   LBRACE = "{",
+//   RBRACE = "}",
+//   // Keywords
+//   FUNCTION = "FUNCTION",
+//   LET = "LET",
+// }
+
 enum TokenType {
-  ILLEGAL = "ILLEGAL",
-  EOF = "EOF",
+  ILLEGAL = 0, // a token/character we don't know about
+  EOF, // "end of file"
   // Identifiers + literals
-  IDENT = "IDENT", // add, foobar, x, y, ...
-  INT = "INT", // 1234
+  IDENT, // add, foobar, x, y, ...
+  INT, // 1234
   // Operators
-  ASSIGN = "=",
-  PLUS = "+",
+  ASSIGN,
+  PLUS,
   // Delimiters
-  COMMA = ",",
-  SEMICOLON = ";",
-  LPAREN = "(",
-  RPAREN = ")",
-  LBRACE = "{",
-  RBRACE = "}",
+  COMMA,
+  SEMICOLON,
+  LPAREN,
+  RPAREN,
+  LBRACE,
+  RBRACE,
   // Keywords
-  FUNCTION = "FUNCTION",
-  LET = "LET",
+  FUNCTION,
+  LET,
 }
 
 type Token = [TokenType, string];
