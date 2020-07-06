@@ -1,12 +1,23 @@
+import { lexerGenerator } from "./lexer";
+
 describe("lexer", () => {
   test("works", () => {
-    const name = "++";
+    const program = `let five = 5;
+    let ten = 10;
+    
+    let add = fn(x, y) {
+      x + y;
+    }
+    
+    let result = add(five, ten);`;
 
-    const char = name.charCodeAt(1);
+    const tokens = [];
 
-    console.log(char);
+    for (let token of lexerGenerator(program)) {
+      tokens.push(token);
+    }
 
-    console.log("teej".slice(1, 2));
+    console.log(tokens);
 
     expect(true).toBe(true);
   });
