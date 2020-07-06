@@ -1,6 +1,6 @@
 # ts_deep_dives
 
-Educational implementations of relatively complex software projects in TypeScript.
+Educational implementations of fun software tools in TypeScript.
 
 ## Actively working on:
 
