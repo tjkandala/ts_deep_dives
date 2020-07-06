@@ -4,13 +4,13 @@ Educational implementations of relatively complex software projects in TypeScrip
 
 ## Actively working on:
 
-- **nit**: TypeScript implementation of Git. Reference: [Building Git](https://shop.jcoglan.com/building-git/) (originally in Ruby)
-
 - **oranguru**: TypeScript implementation of the Monkey language from [_Writing an Interpreter in Go_](https://interpreterbook.com/). Also referencing ["An Introduction to Efficient and Safe Implementations of Dynamic Languages"](https://stefan-marr.de/2020/06/efficient-and-safe-implementations-of-dynamic-languages/).
 
 ## In my learning queue:
 
 ### Projects
+
+- **nit**: TypeScript implementation of Git. Reference: [Building Git](https://shop.jcoglan.com/building-git/) (originally in Ruby)
 
 - **bittorrent client**: Originally in [JavaScript](https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html)
 
