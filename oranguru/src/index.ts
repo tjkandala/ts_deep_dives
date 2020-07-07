@@ -1,4 +1,5 @@
 import { createInterface } from "readline";
+import { userInfo } from "os";
 import { createLexer } from "./lexer";
 
 const rl = createInterface({
@@ -8,9 +9,14 @@ const rl = createInterface({
 
 /**
  * REPL
+ *
+ * goal:
+ * - write an interpeter in Oranguru
  */
 function main() {
-  console.log("starting REPL");
+  const { username } = userInfo();
+  console.log(`Hey ${username}, welcome to the Oranguru REPL!`);
+  console.log(`Waiting for input...`);
 
   rl.on("line", (input) => {
     console.log(input);
