@@ -28,11 +28,11 @@ Educational implementations of fun software tools in TypeScript.
 
 ## Why TypeScript?
 
-1. I find that translating books from one programming language to another forces me to really focus on what the code is doing. When I use the same language as the reference, I can get away with copy-paste coding.
+1. I find that translating books from one programming language to another forces me to really focus on what the code is doing. When I use the same language as the reference, I can get away with copy-paste coding. 
 
 2. I really enjoy programming in TypeScript.
 
-3. I can take some artistic license in writing an "idiomatic" solution in the target language. This is stimulating/makes me feel clever.
+3. I can take some artistic license in writing an "idiomatic" solution in the target language. This is stimulating/makes me feel clever. This is also why I refer to this process as translation, as opposed to transliteration.
 
 4) This is a good opportunity to get familiar with more Node.js apis. I want to make more Node.js tools, and reimplementing existing tools will surely give me some ideas. ts_deep_dives already birthed [sPool](https://github.com/tjkandala/sPool), so I'm excited to see the quality of tools I create after I finish ts_deep_dives.
 
