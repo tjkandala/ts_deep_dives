@@ -32,7 +32,9 @@ type Operator =
   | ["ASTERISK", "*"]
   | ["SLASH", "/"]
   | ["LESSTHAN", "<"]
-  | ["GREATERTHAN", ">"];
+  | ["GREATERTHAN", ">"]
+  | ["EQUAL", "=="]
+  | ["NOT_EQUAL", "!="];
 
 type Delimiter =
   | ["COMMA", ","]
@@ -95,6 +97,14 @@ export function* createLexer(source: string) {
     }
   }
 
+  function peekChar() {
+    if (readPosition > source.length) {
+      return "";
+    } else {
+      return source[readPosition];
+    }
+  }
+
   function nextToken() {
     let tok: Token;
 
@@ -111,7 +121,12 @@ export function* createLexer(source: string) {
 
     switch (char) {
       case "=":
-        tok = ["ASSIGN", char];
+        if (peekChar() == "=") {
+          readChar();
+          tok = ["EQUAL", "=="];
+        } else {
+          tok = ["ASSIGN", char];
+        }
         break;
       case ";":
         tok = ["SEMICOLON", char];
@@ -132,7 +147,12 @@ export function* createLexer(source: string) {
         tok = ["MINUS", char];
         break;
       case "!":
-        tok = ["BANG", char];
+        if (peekChar() == "=") {
+          readChar();
+          tok = ["NOT_EQUAL", "!="];
+        } else {
+          tok = ["BANG", char];
+        }
         break;
       case "*":
         tok = ["ASTERISK", char];
