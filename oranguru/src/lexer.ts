@@ -42,7 +42,15 @@ type Delimiter =
   | ["LBRACE", "{"]
   | ["RBRACE", "}"];
 
-type Keyword = ["FUNCTION", string] | ["LET", string];
+// TODO: narrower types. will have to refactor 'lookupIdent' further
+type Keyword =
+  | ["FUNCTION", string]
+  | ["LET", string]
+  | ["TRUE", string]
+  | ["FALSE", string]
+  | ["IF", string]
+  | ["ELSE", string]
+  | ["RETURN", string];
 
 // type TokenType = Token[0];
 
@@ -193,6 +201,11 @@ function isWhitespace(char: string): boolean {
 const keywords = Object.freeze({
   fn: "FUNCTION",
   let: "LET",
+  true: "TRUE",
+  false: "FALSE",
+  if: "IF",
+  else: "ELSE",
+  return: "RETURN",
 });
 
 function lookupIdent(identOrKeyword: string): Keyword[0] | "IDENT" {
