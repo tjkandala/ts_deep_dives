@@ -121,6 +121,7 @@ export function* createLexer(source: string) {
 
     switch (char) {
       case "=":
+        // TODO: implement 'makeTwoCharToken()'
         if (peekChar() == "=") {
           readChar();
           tok = ["EQUAL", "=="];
