@@ -24,7 +24,15 @@ type Token =
   // Keywords
   | Keyword;
 
-type Operator = ["ASSIGN", "="] | ["PLUS", "+"];
+type Operator =
+  | ["ASSIGN", "="]
+  | ["PLUS", "+"]
+  | ["MINUS", "-"]
+  | ["BANG", "!"]
+  | ["ASTERISK", "*"]
+  | ["SLASH", "/"]
+  | ["LESSTHAN", "<"]
+  | ["GREATERTHAN", ">"];
 
 type Delimiter =
   | ["COMMA", ","]
@@ -111,6 +119,24 @@ export function* createLexer(source: string) {
         break;
       case "+":
         tok = ["PLUS", char];
+        break;
+      case "-":
+        tok = ["MINUS", char];
+        break;
+      case "!":
+        tok = ["BANG", char];
+        break;
+      case "*":
+        tok = ["ASTERISK", char];
+        break;
+      case "/":
+        tok = ["SLASH", char];
+        break;
+      case "<":
+        tok = ["LESSTHAN", char];
+        break;
+      case ">":
+        tok = ["GREATERTHAN", char];
         break;
       case "{":
         tok = ["LBRACE", char];
