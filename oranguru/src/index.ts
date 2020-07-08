@@ -19,8 +19,6 @@ function main() {
   console.log(`Waiting for input...`);
 
   rl.on("line", (input) => {
-    console.log(input);
-
     const tokens = [];
     for (const token of createLexer(input)) {
       tokens.push(token);
