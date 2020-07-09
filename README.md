@@ -10,6 +10,8 @@ Educational implementations of fun software tools in TypeScript.
 
 ### Projects
 
+- **oranguru compiler**: [Writing a Compiler in Go](https://compilerbook.com/)
+
 - **nit**: TypeScript implementation of Git. Reference: [Building Git](https://shop.jcoglan.com/building-git/) (originally in Ruby)
 
 - **bittorrent client**: Originally in [JavaScript](https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html)
