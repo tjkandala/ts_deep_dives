@@ -1,0 +1,13 @@
+{
+  "name": "regex_engine",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "TJ Kandala",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf ./dist && tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.20"
+  }
+}
