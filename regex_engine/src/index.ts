@@ -15,4 +15,11 @@
  * corresponding regular expression that describes the same language and vice versa.
  * - in other words, regular expressions can be thought of as a user-friendly alternative to finite
  * automata for describing patterns in text.
+ *
+ * - to compile a regular expression R to an NFA we first need to parse R into its constituent subexpressions.
+ * - the rules for constructing an NFA can be split into two parts:
+ * 1) base rules for handling subexpressions with no operators
+ * 2) inductive rules for constructing largers NFAs from the smallers NFAs by applying the operators
+ *
+ *
  */
